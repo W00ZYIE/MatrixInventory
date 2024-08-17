@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matrix</title>
-    <link rel="icon" href="grid.ico" type="image/x-icon">
+    <link rel="icon" href="Matrix.ico" type="image/x-icon">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -18,11 +18,11 @@
         <main>
             <div class="tabs">
                 <button class="tab-button active" onclick="showTab('add-item')">Add Item</button>
-                <button class="tab-button" onclick="showTab('inventory-list')">Inventory List</button>
+                <button class="tab-button" onclick="showTab('inventory')">Inventory</button>
                 <button class="tab-button" onclick="showTab('analytics')">Analytics</button>
             </div>
             
-            <section id="add-item" class="tab-content">
+            <section id="add-item" class="tab-content active">
                 <h2>Add New Item</h2>
                 <form id="item-form">
                     <div class="form-group">
@@ -55,7 +55,7 @@
                 <div id="notification" class="notification hidden">Item added successfully!</div>
             </section>
 
-            <section id="inventory-list" class="tab-content hidden">
+            <section id="inventory" class="tab-content">
                 <h2>Inventory List</h2>
                 <div class="search-filter">
                     <input type="text" id="search-input" placeholder="Search items...">
@@ -85,12 +85,25 @@
                 </div>
             </section>
 
-            <section id="analytics" class="tab-content hidden">
-                <h2>Inventory Analytics</h2>
+            <section id="analytics" class="tab-content">
+                <h2>Analytics Overview</h2>
                 <div class="charts-container">
-                    <canvas id="salesValueChart"></canvas>
-                    <canvas id="profitMarginChart"></canvas>
-                    <canvas id="categoryPerformanceChart"></canvas>
+                    <div class="chart">
+                        <h3>Purchase Price Analysis</h3>
+                        <canvas id="purchasePriceChart"></canvas>
+                    </div>
+                    <div class="chart">
+                        <h3>Category Performance</h3>
+                        <canvas id="categoryPerformanceChart"></canvas>
+                    </div>
+                    <div class="chart">
+                        <h3>Age Of Inventory</h3>
+                        <canvas id="ageOfInventoryChart"></canvas>
+                    </div>
+                    <div class="chart">
+                        <h3>Purchases Over Time</h3>
+                        <canvas id="purchasesTrendChart"></canvas>
+                    </div>
                 </div>
             </section>
         </main>

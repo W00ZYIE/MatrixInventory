@@ -47,6 +47,9 @@ const renderItems = () => {
     document.getElementById('page-info').textContent = `Page ${currentPage}`;
     document.querySelector('.page-button:nth-of-type(1)').disabled = currentPage === 1;
     document.querySelector('.page-button:nth-of-type(2)').disabled = currentPage === Math.ceil(filteredItems.length / itemsPerPage);
+
+    // Update analytics
+    renderAnalytics();
 };
 
 // Add new item or update existing item
@@ -77,131 +80,42 @@ document.getElementById('item-form').addEventListener('submit', (e) => {
     }
 
     saveItems();
-    renderItems();
+    renderItems(); // Renders the items and updates analytics
     document.getElementById('item-form').reset();
 });
-
-// Edit item
-const editItem = (index) => {
-    const item = items[index];
-    document.getElementById('item-name').value = item.name;
-    document.getElementById('category').value = item.category;
-    document.getElementById('purchase-date').value = item.purchaseDate;
-    document.getElementById('quantity').value = item.quantity;
-    document.getElementById('purchase-price').value = item.purchasePrice;
-
-    editIndex = index;
-};
 
 // Delete item
 const deleteItem = (index) => {
     items.splice(index, 1);
     saveItems();
-    renderItems();
+    renderItems(); // Renders the items and updates analytics
     showNotification('Item deleted successfully!');
 };
 
-// Search functionality
-document.getElementById('search-input').addEventListener('input', renderItems);
-
-// Pagination
-const changePage = (direction) => {
-    const totalPages = Math.ceil(items.length / itemsPerPage);
-    currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
-    renderItems();
-};
-
-// Export CSV
-const exportData = () => {
-    const csvRows = [];
-    const headers = ['Item Name', 'Category', 'Purchase Date', 'Quantity', 'Purchase Price ($)'];
-    csvRows.push(headers.join(','));
-
-    items.forEach(item => {
-        const row = [
-            item.name,
-            item.category,
-            item.purchaseDate,
-            item.quantity,
-            item.purchasePrice.toFixed(2)
-        ];
-        csvRows.push(row.join(','));
-    });
-
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'inventory.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-};
-
-// Render Analytics
 const renderAnalytics = () => {
-    const ctxSalesValue = document.getElementById('salesValueChart').getContext('2d');
-    const ctxProfitMargin = document.getElementById('profitMarginChart').getContext('2d');
+    const ctxPurchasePrice = document.getElementById('purchasePriceChart').getContext('2d');
     const ctxCategoryPerformance = document.getElementById('categoryPerformanceChart').getContext('2d');
+    const ctxPurchasesTrend = document.getElementById('purchasesTrendChart').getContext('2d');
+    const ctxAgeOfInventory = document.getElementById('ageOfInventoryChart').getContext('2d');
 
-    const totalValue = items.reduce((sum, item) => sum + item.purchasePrice * item.quantity, 0).toFixed(2);
-    const totalCost = items.reduce((sum, item) => sum + (item.purchasePrice * 0.7 * item.quantity), 0).toFixed(2); // Assuming 30% profit margin
-    const totalProfit = (totalValue - totalCost).toFixed(2);
-
-    const categories = {};
-    items.forEach(item => {
-        categories[item.category] = (categories[item.category] || 0) + (item.purchasePrice * item.quantity);
-    });
-
-    // Sales Value Chart
-    new Chart(ctxSalesValue, {
-        type: 'bar',
-        data: {
-            labels: ['Total Sales Value'],
-            datasets: [{
-                label: 'Value ($)',
-                data: [totalValue],
-                backgroundColor: '#007bff',
-                borderColor: '#0056b3',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (tooltipItem) => `Value: $${tooltipItem.raw}` } }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+    // Destroy existing charts to avoid stacking multiple charts on the same canvas
+    [ctxPurchasePrice, ctxCategoryPerformance, ctxPurchasesTrend, ctxAgeOfInventory].forEach(ctx => {
+        if (Chart.getChart(ctx)) {
+            Chart.getChart(ctx).destroy();
         }
     });
 
-    // Profit Margin Chart
-    new Chart(ctxProfitMargin, {
-        type: 'doughnut',
-        data: {
-            labels: ['Profit', 'Cost'],
-            datasets: [{
-                label: 'Profit Margin',
-                data: [totalProfit, totalCost],
-                backgroundColor: ['#28a745', '#dc3545'],
-                borderColor: '#fff',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { callbacks: { label: (tooltipItem) => `Amount: $${tooltipItem.raw}` } }
-            }
-        }
-    });
+    // Total Inventory Value
+    const totalPurchasePrice = items.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0).toFixed(2);
+    const avgPurchasePricePerItem = items.length ? (totalPurchasePrice / items.length).toFixed(2) : 0;
 
     // Category Performance Chart
+    const categories = {};
+    items.forEach(item => {
+        const category = item.category || 'Uncategorized'; // Handle missing categories
+        categories[category] = (categories[category] || 0) + (item.purchasePrice * item.quantity);
+    });
+
     new Chart(ctxCategoryPerformance, {
         type: 'pie',
         data: {
@@ -222,9 +136,110 @@ const renderAnalytics = () => {
             }
         }
     });
+
+    // Purchase Price Analysis Chart
+    new Chart(ctxPurchasePrice, {
+        type: 'doughnut',
+        data: {
+            labels: ['Total Purchase Price', 'Average Purchase Price per Item'],
+            datasets: [{
+                label: 'Purchase Price Analysis',
+                data: [totalPurchasePrice, avgPurchasePricePerItem],
+                backgroundColor: ['#007bff', '#28a745'],
+                borderColor: '#fff',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: (tooltipItem) => `Amount: $${tooltipItem.raw}` } }
+            }
+        }
+    });
+    
+    // Purchases Over Time Chart
+    const purchaseDates = items.map(item => item.purchaseDate);
+    const purchaseCounts = purchaseDates.reduce((acc, date) => {
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+    }, {});
+
+    new Chart(ctxPurchasesTrend, {
+        type: 'line',
+        data: {
+            labels: Object.keys(purchaseCounts),
+            datasets: [{
+                label: 'Purchases Over Time',
+                data: Object.values(purchaseCounts),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (tooltipItem) => `Purchases: ${tooltipItem.raw}` } }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: true, maxTicksLimit: 10 }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Age of Inventory Chart
+    const currentDate = new Date();
+    const ageData = items.map(item => {
+        const itemDate = new Date(item.purchaseDate); // Ensure correct date field
+        const ageInDays = Math.floor((currentDate - itemDate) / (1000 * 60 * 60 * 24));
+        return { ageInDays, purchasePrice: item.purchasePrice * item.quantity };
+    });
+
+    const ageGroups = {};
+    ageData.forEach(({ ageInDays, purchasePrice }) => {
+        const ageGroup = `${Math.floor(ageInDays / 30) * 30} - ${Math.floor(ageInDays / 30) * 30 + 29} days`;
+        ageGroups[ageGroup] = (ageGroups[ageGroup] || 0) + purchasePrice;
+    });
+
+    new Chart(ctxAgeOfInventory, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(ageGroups),
+            datasets: [{
+                label: 'Inventory Value by Age',
+                data: Object.values(ageGroups),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { callbacks: { label: (tooltipItem) => `Value: $${tooltipItem.raw}` } }
+            },
+            scales: {
+                x: {
+                    ticks: { autoSkip: true, maxTicksLimit: 10 }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
 };
 
-// Tab Switching
+// Call renderAnalytics when the analytics tab is shown
 const showTab = (tabId) => {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.toggle('active', tab.id === tabId);
@@ -239,14 +254,11 @@ const showTab = (tabId) => {
     }
 };
 
-// Dark Mode Toggle
-const toggleDarkMode = () => {
-    document.body.classList.toggle('dark-mode');
-    const chartColors = document.body.classList.contains('dark-mode') ? '#fff' : '#000';
-    Chart.defaults.color = chartColors;
-    renderAnalytics(); // Re-render analytics charts to apply dark mode styles
-};
 
+// Dark Mode Toggle
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+}
 
 // Show Notification
 const showNotification = (message) => {
