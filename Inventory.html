@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix</title>
+    <link rel="icon" href="grid.ico" type="image/x-icon">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Matrix</h1>
+            <button class="dark-mode-toggle" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+        </header>
+        
+        <main>
+            <div class="tabs">
+                <button class="tab-button active" onclick="showTab('add-item')">Add Item</button>
+                <button class="tab-button" onclick="showTab('inventory-list')">Inventory List</button>
+                <button class="tab-button" onclick="showTab('analytics')">Analytics</button>
+            </div>
+            
+            <section id="add-item" class="tab-content">
+                <h2>Add New Item</h2>
+                <form id="item-form">
+                    <div class="form-group">
+                        <label for="item-name">Item Name <span class="required">*</span></label>
+                        <input type="text" id="item-name" placeholder="Enter item name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category">Category <span class="required">*</span></label>
+                        <input type="text" id="category" placeholder="Enter category" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="purchase-date">Purchase Date <span class="required">*</span></label>
+                        <input type="date" id="purchase-date" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quantity">Quantity <span class="required">*</span></label>
+                        <input type="number" id="quantity" placeholder="Enter quantity" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="purchase-price">Purchase Price ($) <span class="required">*</span></label>
+                        <input type="number" id="purchase-price" step="0.01" placeholder="Enter price" required>
+                    </div>
+                    
+                    <button type="submit">Add Item</button>
+                </form>
+                <div id="notification" class="notification hidden">Item added successfully!</div>
+            </section>
+
+            <section id="inventory-list" class="tab-content hidden">
+                <h2>Inventory List</h2>
+                <div class="search-filter">
+                    <input type="text" id="search-input" placeholder="Search items...">
+                    <button class="export-button" onclick="exportData()">Export CSV</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable(0)">Item Name</th>
+                                <th onclick="sortTable(1)">Category</th>
+                                <th onclick="sortTable(2)">Purchase Date</th>
+                                <th onclick="sortTable(3)">Quantity</th>
+                                <th onclick="sortTable(4)">Purchase Price ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items">
+                            <!-- Items will be added here dynamically -->
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button class="page-button" onclick="changePage(-1)">Previous</button>
+                        <span id="page-info">Page 1</span>
+                        <button class="page-button" onclick="changePage(1)">Next</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="analytics" class="tab-content hidden">
+                <h2>Inventory Analytics</h2>
+                <div class="charts-container">
+                    <canvas id="salesValueChart"></canvas>
+                    <canvas id="profitMarginChart"></canvas>
+                    <canvas id="categoryPerformanceChart"></canvas>
+                </div>
+            </section>
+        </main>
+    
+        <script src="script.js"></script>
+    </div>
+</body>
+</html>
